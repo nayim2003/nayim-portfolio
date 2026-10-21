@@ -1,0 +1,33 @@
+---
+title: "Why I start every ML project with EDA, not modeling"
+tag: "Machine Learning"
+read: 5
+date: "2024-11-15"
+---
+
+# Why I start every ML project with EDA, not modeling
+
+I've seen too many data scientists jump straight into modeling. Load data → fit XGBoost → tune hyperparameters → call it a day. **This is backwards.**
+
+## The problem with model-first thinking
+
+A model is only as good as your understanding of the data. If you don't know:
+
+- Where missing values hide
+- Which distributions are skewed
+- What features secretly correlate
+- Where outliers will break your loss function
+
+...then your fancy model is just noise.
+
+## My 5-step EDA workflow
+
+### 1. Understand the shape and story
+
+Before touching a single model, I load the data and ask:
+
+```python
+df.shape
+df.info()
+df.describe()
+df.isnull().sum().sort_values(ascending=False)
