@@ -17,18 +17,34 @@ export default function Gallery() {
       { name: 'ML', value: 88 }, { name: 'DL/NLP', value: 78 }, { name: 'Viz', value: 82 }, { name: 'MLOps', value: 72 },
     ];
     const svg = d3.select(radialRef.current).append('svg').attr('viewBox', `0 0 ${width} ${height}`).attr('width', '100%').attr('height', '100%');
-    const g = svg.append('g').attr('transform', `translate(${width/2},${height/2})`);
+    const g = svg.append('g').attr('transform', `translate(${width / 2},${height / 2})`);
     const step = (Math.PI * 2) / data.length;
     const maxR = 130, inner = 30;
+
     data.forEach((d, i) => {
-      const a0 = i * step, a1 = (i + 1) * step - 0.05;
+      const a0 = i * step;
+      const a1 = (i + 1) * step - 0.05;
       const r = inner + (d.value / 100) * (maxR - inner);
-      g.append('path')
-        .attr('d', d3.arc().innerRadius(inner).outerRadius(r).startAngle(a0).endAngle(a1)()!)
-        .attr('fill', '#4fd1c5').attr('opacity', 0.85);
+      const arcGen = d3.arc<any>()
+        .innerRadius(inner)
+        .outerRadius(r)
+        .startAngle(a0)
+        .endAngle(a1);
+      const pathD = arcGen({} as any);
+      if (pathD) {
+        g.append('path')
+          .attr('d', pathD)
+          .attr('fill', '#4fd1c5')
+          .attr('opacity', 0.85);
+      }
       const angle = (a0 + a1) / 2;
-      g.append('text').attr('x', Math.sin(angle) * (maxR + 18)).attr('y', -Math.cos(angle) * (maxR + 18))
-        .attr('text-anchor', 'middle').attr('fill', '#8a97ad').attr('font-size', 11).text(d.name);
+      g.append('text')
+        .attr('x', Math.sin(angle) * (maxR + 18))
+        .attr('y', -Math.cos(angle) * (maxR + 18))
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#8a97ad')
+        .attr('font-size', 11)
+        .text(d.name);
     });
   }, []);
 
@@ -44,9 +60,28 @@ export default function Gallery() {
     const x = d3.scaleLinear().domain([0, 9]).range([100, width - 30]);
     const y = d3.scaleBand().domain(data.map(d => d.name)).range([20, height - 20]).padding(0.25);
     data.forEach(d => {
-      svg.append('rect').attr('x', 100).attr('y', y(d.name)).attr('width', x(d.value) - 100).attr('height', y.bandwidth()).attr('fill', '#4fd1c5').attr('rx', 4);
-      svg.append('text').attr('x', 95).attr('y', y(d.name)! + y.bandwidth() / 2).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('fill', '#8a97ad').attr('font-size', 10).text(d.name);
-      svg.append('text').attr('x', x(d.value) + 6).attr('y', y(d.name)! + y.bandwidth() / 2).attr('dominant-baseline', 'middle').attr('fill', '#e8eef9').attr('font-size', 10).text(d.value);
+      svg.append('rect')
+        .attr('x', 100)
+        .attr('y', y(d.name) || 0)
+        .attr('width', x(d.value) - 100)
+        .attr('height', y.bandwidth())
+        .attr('fill', '#4fd1c5')
+        .attr('rx', 4);
+      svg.append('text')
+        .attr('x', 95)
+        .attr('y', (y(d.name) || 0) + y.bandwidth() / 2)
+        .attr('text-anchor', 'end')
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', '#8a97ad')
+        .attr('font-size', 10)
+        .text(d.name);
+      svg.append('text')
+        .attr('x', x(d.value) + 6)
+        .attr('y', (y(d.name) || 0) + y.bandwidth() / 2)
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', '#e8eef9')
+        .attr('font-size', 10)
+        .text(d.value);
     });
   }, []);
 
@@ -63,17 +98,40 @@ export default function Gallery() {
     const m = { top: 16, right: 20, bottom: 32, left: 32 };
     const x = d3.scalePoint().domain(data.map(d => d.month)).range([m.left, width - m.right]);
     const y = d3.scaleLinear().domain([0, 15]).range([height - m.bottom, m.top]);
-    svg.append('defs').append('linearGradient').attr('id', 'areaG').attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1)
-      .call(g => { g.append('stop').attr('offset', '0%').attr('stop-color', '#4fd1c5').attr('stop-opacity', 0.45); g.append('stop').attr('offset', '100%').attr('stop-color', '#4fd1c5').attr('stop-opacity', 0); });
-    svg.append('path').datum(data)
-      .attr('d', d3.area<any>().x(d => x(d.month)!).y0(height - m.bottom).y1(d => y(d.v)).curve(d3.curveMonotoneX) as any)
+    const defs = svg.append('defs');
+    const grad = defs.append('linearGradient')
+      .attr('id', 'areaG')
+      .attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+    grad.append('stop').attr('offset', '0%').attr('stop-color', '#4fd1c5').attr('stop-opacity', 0.45);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', '#4fd1c5').attr('stop-opacity', 0);
+    const areaGen = d3.area<any>()
+      .x(d => x(d.month) || 0)
+      .y0(height - m.bottom)
+      .y1(d => y(d.v))
+      .curve(d3.curveMonotoneX);
+    svg.append('path')
+      .datum(data)
+      .attr('d', areaGen as any)
       .attr('fill', 'url(#areaG)');
-    svg.append('path').datum(data)
-      .attr('d', d3.line<any>().x(d => x(d.month)!).y(d => y(d.v)).curve(d3.curveMonotoneX) as any)
-      .attr('fill', 'none').attr('stroke', '#4fd1c5').attr('stroke-width', 2.5);
+    const lineGen = d3.line<any>()
+      .x(d => x(d.month) || 0)
+      .y(d => y(d.v))
+      .curve(d3.curveMonotoneX);
+    svg.append('path')
+      .datum(data)
+      .attr('d', lineGen as any)
+      .attr('fill', 'none')
+      .attr('stroke', '#4fd1c5')
+      .attr('stroke-width', 2.5);
     data.forEach((d, i) => {
       if (i % 2 !== 0 && i !== data.length - 1) return;
-      svg.append('text').attr('x', x(d.month)!).attr('y', height - 8).attr('text-anchor', 'middle').attr('fill', '#8a97ad').attr('font-size', 9).text(d.month);
+      svg.append('text')
+        .attr('x', x(d.month) || 0)
+        .attr('y', height - 8)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#8a97ad')
+        .attr('font-size', 9)
+        .text(d.month);
     });
   }, []);
 
@@ -92,14 +150,38 @@ export default function Gallery() {
     const y = d3.scaleLinear().domain([0, 11]).range([height - m.bottom, m.top]);
     const color = d3.scaleLinear<string>().domain([5, 10]).range(['#6b9eff', '#f472b6']).clamp(true);
     [0, 2, 4, 6, 8, 10].forEach(t => {
-      svg.append('line').attr('x1', m.left).attr('x2', width - m.right).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', 'rgba(255,255,255,.08)');
-      svg.append('line').attr('x1', x(t)).attr('x2', x(t)).attr('y1', m.top).attr('y2', height - m.bottom).attr('stroke', 'rgba(255,255,255,.08)');
+      svg.append('line')
+        .attr('x1', m.left).attr('x2', width - m.right)
+        .attr('y1', y(t)).attr('y2', y(t))
+        .attr('stroke', 'rgba(255,255,255,.08)');
+      svg.append('line')
+        .attr('x1', x(t)).attr('x2', x(t))
+        .attr('y1', m.top).attr('y2', height - m.bottom)
+        .attr('stroke', 'rgba(255,255,255,.08)');
     });
-    svg.append('text').attr('x', (m.left + width - m.right) / 2).attr('y', height - 8).attr('text-anchor', 'middle').attr('fill', '#8a97ad').attr('font-size', 10).text('Complexity →');
-    svg.append('text').attr('transform', `translate(12,${(m.top + height - m.bottom) / 2}) rotate(-90)`).attr('text-anchor', 'middle').attr('fill', '#8a97ad').attr('font-size', 10).text('Impact →');
+    svg.append('text')
+      .attr('x', (m.left + width - m.right) / 2)
+      .attr('y', height - 8)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#8a97ad')
+      .attr('font-size', 10)
+      .text('Complexity →');
+    svg.append('text')
+      .attr('transform', `translate(12,${(m.top + height - m.bottom) / 2}) rotate(-90)`)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#8a97ad')
+      .attr('font-size', 10)
+      .text('Impact →');
     data.forEach(d => {
-      svg.append('circle').attr('cx', x(d.x)).attr('cy', y(d.y)).attr('r', 8).attr('fill', color(d.y)).attr('opacity', 0.8).attr('stroke', '#e8eef9').attr('stroke-width', 1);
-      svg.append('text').attr('x', x(d.x)).attr('y', y(d.y) - 12).attr('text-anchor', 'middle').attr('fill', '#8a97ad').attr('font-size', 9).text(d.name);
+      svg.append('circle')
+        .attr('cx', x(d.x)).attr('cy', y(d.y)).attr('r', 8)
+        .attr('fill', color(d.y)).attr('opacity', 0.8)
+        .attr('stroke', '#e8eef9').attr('stroke-width', 1);
+      svg.append('text')
+        .attr('x', x(d.x)).attr('y', y(d.y) - 12)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#8a97ad').attr('font-size', 9)
+        .text(d.name);
     });
   }, []);
 
