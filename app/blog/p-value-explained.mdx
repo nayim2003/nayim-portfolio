@@ -1,0 +1,51 @@
+
+## `content/blog/p-value-explained.mdx`
+
+```mdx
+---
+title: "Hypothesis testing, explained without the math horror"
+tag: "Statistics"
+read: 7
+date: "2024-10-22"
+---
+
+# Hypothesis testing, explained without the math horror
+
+**The p-value is the most misunderstood concept in statistics.**
+
+## What a p-value is NOT
+
+- ❌ Probability your hypothesis is true
+- ❌ Probability you made an error
+- ❌ A measure of effect size
+- ❌ Proof of anything
+
+## What a p-value actually is
+
+A p-value is **the probability of observing data at least as extreme as what you observed, assuming the null hypothesis is true**.
+
+### Example: A/B test
+
+You test a new website design.
+
+- **Null hypothesis (H₀):** New design = Old design
+- **Alternative (H₁):** New design ≠ Old design
+
+You compute p = 0.03.
+
+**What this means:** IF there were truly no difference, there's a 3% chance of seeing a difference this big or bigger.
+
+## The threshold (α) is arbitrary
+
+The 0.05 threshold comes from Ronald Fisher's 1925 book. There's no mathematical law that says 5% is the magic number.
+
+## What to report instead
+
+1. **Effect size** — How big is the difference?
+2. **Confidence interval** — Range of plausible values
+3. **Sample size** — Is this powered enough?
+4. **Practical significance** — Does it matter?
+
+## Conclusion
+
+The p-value is a useful tool, not a verdict.
